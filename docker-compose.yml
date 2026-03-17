@@ -14,28 +14,49 @@ services:
     volumes:
       - minio_data:/data
 
-  
+  postgres:
+    image: postgres:15
+    container_name: mlflow_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    # ports:
+    #   - "5432:5432"
+    volumes:
+      - mlflow_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   mlflow:
     image: ghcr.io/mlflow/mlflow
     container_name: mlflow_server
     depends_on:
-      - minio
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
     ports:
     - "5001:5000"
     environment:
-      MLFLOW_S3_ENDPOINT_URL: ${MLFLOW_S3_ENDPOINT_URL}
+      MLFLOW_S3_ENDPOINT_URL: ${MLFLOW_S3_ENDPOINT_URL_DOCKER}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_ACCESS_KEY_ACCESS: ${AWS_SECRET_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     command: >
       mlflow server
-      --backend-store-uri sqlite:///mlflow.db
+      --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       --default-artifact-root s3://mlflow/
+      --serve-artifacts
       --host 0.0.0.0
+      --port 5000
 
   api:
     build: 
       context: .
-      dockerfile: docker/api/dockerfile
+      dockerfile: src/api/Dockerfile
     container_name: mlfactory-api
     ports:
     - "8001:8000"
@@ -47,7 +68,7 @@ services:
   streamlit:
     build: 
       context: .
-      dockerfile: docker/streamlit/dockerfile
+      dockerfile: src/front/Dockerfile
     container_name: mlfactory-streamlit
     ports:
     - "8501:8501"
@@ -56,9 +77,7 @@ services:
     depends_on:
       - api
 
-    
-
-
   
 volumes:
   minio_data:
+  mlflow_pg_data:

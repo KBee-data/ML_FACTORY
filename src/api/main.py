@@ -11,7 +11,7 @@ from mlflow import MlflowClient
 
 load_dotenv() # reads .enc in project root
 
-MLFLOW_URI = os.getenv("MLFLOW_TRACKING_URI")
+MLFLOW_URI = os.getenv("MLFLOW_TRACKING_URI_DOCKER")
 MODEL_NAME = "iris_model"
 MODEL_ALIAS = "Production"
 

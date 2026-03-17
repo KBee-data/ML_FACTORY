@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-API_URL = os.getenv("API_URL_PREDICT")
+API_URL = os.getenv("URL_PREDICT_DOCKER")
 
 st.title("Iris Prediction App")
 
