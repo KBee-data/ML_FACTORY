@@ -17,6 +17,10 @@ MODEL_ALIAS = "Production"
 
 app = FastAPI(title="ML Factory API")
 
+print(80*"-")
+print(MLFLOW_URI)
+print(80*"-")
+
 # MLflow client
 client = MlflowClient(tracking_uri=MLFLOW_URI)
 

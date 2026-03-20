@@ -8,6 +8,7 @@ services:
     environment:
       MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
       MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI_DOCKER}
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
@@ -38,7 +39,7 @@ services:
       minio:
         condition: service_started
     ports:
-    - "5001:5000"
+    - "5001:5001"
     environment:
       MLFLOW_S3_ENDPOINT_URL: ${MLFLOW_S3_ENDPOINT_URL_DOCKER}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
@@ -49,7 +50,8 @@ services:
       --default-artifact-root s3://mlflow/
       --serve-artifacts
       --host 0.0.0.0
-      --port 5000
+      --port 5001
+      --allowed-hosts "mlflow:*, localhost:*, minio:*" 
 
   api:
     build: 
@@ -58,6 +60,8 @@ services:
     container_name: mlfactory-api
     ports:
     - "8001:8000"
+    environment:
+      MLFLOW_TRACKING_URI_DOCKER: ${MLFLOW_TRACKING_URI_DOCKER}
     env_file:
       - .env
     depends_on:
