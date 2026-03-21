@@ -1,10 +1,21 @@
 # ML_FACTORY/src/train/train.py
-from dotenv import load_dotenv
 import os
 
-load_dotenv()
+if os.getenv("MLFLOW_TRACKING_URI_DOCKER") is None:
+    from dotenv import load_dotenv
+    load_dotenv()
 
-import os 
+# Set MLflow env vars properly for both local and Docker
+os.environ["MLFLOW_TRACKING_URI"] = os.getenv("MLFLOW_TRACKING_URI_DOCKER")
+os.environ["MLFLOW_S3_ENDPOINT_URL"] = os.getenv("MLFLOW_S3_ENDPOINT_URL_DOCKER")
+os.environ["AWS_ACCESS_KEY_ID"] = os.getenv("AWS_ACCESS_KEY_ID")
+os.environ["AWS_SECRET_ACCESS_KEY"] = os.getenv("AWS_SECRET_ACCESS_KEY")
+
+MLFLOW_TRACKING_URI = os.environ["MLFLOW_TRACKING_URI"]
+MLFLOW_S3_ENDPOINT_URL = os.environ["MLFLOW_S3_ENDPOINT_URL"]
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+
 import mlflow
 import mlflow.sklearn
 import boto3
@@ -14,20 +25,13 @@ from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 
-
-
-# MinIO configuration
-MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI")
-MLFLOW_S3_ENDPOINT_URL = os.getenv("MLFLOW_S3_ENDPOINT_URL")
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-
 def prepare_minio():
     """Create bucket if it doesn't exist"""
 
     s3 = boto3.client(
         "s3", endpoint_url=MLFLOW_S3_ENDPOINT_URL,
-    
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY
     )
 
     buckets = [b["Name"] for b in s3.list_buckets()["Buckets"]]
