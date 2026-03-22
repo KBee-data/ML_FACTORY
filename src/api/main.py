@@ -13,8 +13,8 @@ if os.getenv("MLFLOW_TRACKING_URI_DOCKER") is None:
     load_dotenv() # reads .env in project root
 
 MLFLOW_URI = os.getenv("MLFLOW_TRACKING_URI_DOCKER")
-MODEL_NAME = "iris_model"
-MODEL_ALIAS = "Production"
+MODEL_NAME = "iris_model_"
+MODEL_ALIAS = "production"
 
 mlflow.set_tracking_uri(MLFLOW_URI)
 app = FastAPI(title="ML Factory API")

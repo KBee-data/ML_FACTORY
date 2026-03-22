@@ -23,7 +23,8 @@ import boto3
 from mlflow.tracking import MlflowClient
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
+#from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 
 def prepare_minio():
     """Create bucket if it doesn't exist"""
@@ -43,27 +44,29 @@ def prepare_minio():
     
 def train_and_register():
     mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-    mlflow.set_experiment("iris_experiment")
+    mlflow.set_experiment("iris_experiment_")
 
     iris = load_iris()
     X_train, X_test, y_train, y_test = train_test_split(
         iris.data, iris.target, test_size=0.25, random_state=42
         )
     
-    model = LogisticRegression(max_iter=200)
+    #model_ = LogisticRegression(max_iter=200)
+    model_ = RandomForestClassifier()
+
 
     with mlflow.start_run():
-        model.fit(X_train, y_train)
+        model_.fit(X_train, y_train)
 
-        accuracy = model.score(X_test, y_test)
+        accuracy = model_.score(X_test, y_test)
 
-        mlflow.log_param("model_type", "logistic_regression")
+        mlflow.log_param("model_type", "random_forest_classifier_")
         mlflow.log_metric("accuracy", accuracy)
 
-        model_name = "iris_model"
+        model_name = "iris_model_"
 
         mlflow.sklearn.log_model(
-            sk_model=model,
+            sk_model=model_,
             artifact_path="model",
             registered_model_name=model_name
         )
@@ -75,13 +78,20 @@ def train_and_register():
         stages=["None"]
     )[0].version
 
-    client.set_registered_model_alias(
-        model_name, 
-        "Production",
-        latest_version
-    )
+    # client.set_registered_model_alias(
+    #     model_name, 
+    #     "Production",
+    #     latest_version
+    # )
 
-    print(f"Model vresion {latest_version} set to Production")
+    # client.set_registered_model_alias(
+    # model_name, 
+    # "production",
+    # latest_version
+    # )
+
+
+    print(f"Model version {latest_version} set to production")
 
 if __name__ == "__main__":
     prepare_minio()
