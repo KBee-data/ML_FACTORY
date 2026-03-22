@@ -23,8 +23,8 @@ import boto3
 from mlflow.tracking import MlflowClient
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
-#from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+#from sklearn.ensemble import RandomForestClassifier
 
 def prepare_minio():
     """Create bucket if it doesn't exist"""
@@ -51,8 +51,8 @@ def train_and_register():
         iris.data, iris.target, test_size=0.25, random_state=42
         )
     
-    #model_ = LogisticRegression(max_iter=200)
-    model_ = RandomForestClassifier()
+    model_ = LogisticRegression(max_iter=200)
+    #model_ = RandomForestClassifier()
 
 
     with mlflow.start_run():
@@ -60,7 +60,7 @@ def train_and_register():
 
         accuracy = model_.score(X_test, y_test)
 
-        mlflow.log_param("model_type", "random_forest_classifier_")
+        mlflow.log_param("model_type", "logistic_regression")
         mlflow.log_metric("accuracy", accuracy)
 
         model_name = "iris_model_"
@@ -78,17 +78,13 @@ def train_and_register():
         stages=["None"]
     )[0].version
 
-    # client.set_registered_model_alias(
-    #     model_name, 
-    #     "Production",
-    #     latest_version
-    # )
-
-    # client.set_registered_model_alias(
-    # model_name, 
-    # "production",
-    # latest_version
-    # )
+    AUTOMATION_MODE = True
+    if AUTOMATION_MODE:
+        client.set_registered_model_alias(
+        model_name,
+        "production",
+        latest_version
+    )
 
 
     print(f"Model version {latest_version} set to production")

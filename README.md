@@ -153,20 +153,20 @@ These must point to **Docker services**, not localhost.
 
 ## 🔄 Inference Flow
 
-1. API queries MLflow for:
+1. API queries MLflow for the production model:
 
    ```
    models:/iris_model_@production
    ```
-2. MLflow returns model location
-3. API downloads artifacts from MinIO
-4. Prediction is served via FastAPI
+2. MLflow resolves the alias to a specific model version and returns model location
+3. The API downloads model artifacts from MinIO
+4. The model is loaded and used to generate predictions via FastAPI
 
 #### ⚠️ Important Note on MLflow Aliases
 
-MLflow UI  **automatically normalizes aliases to lowercase** when they are set via the UI. This can lead to subtle bugs when trying to set model alias to "Production" manually via MLflow UI.
+MLflow UI  **automatically converts aliases to lowercase** when they are set via the UI. This can lead to subtle bugs when trying to set model alias to "Production" manually via MLflow UI.
 
-If the API uses:
+If your API uses:
 ```python 
 MODEL_ALIAS = "Production"
 ```
@@ -176,11 +176,76 @@ production
 ```
 👉 The API will **fail to find the model**
 
-#### ✅ Solution: Always use lowercase aliases in API code:
+#### ✅ Solution
+Always use **lowercase aliases** in API code:
 
 ```python
 MODEL_ALIAS = "production"
 ```
+---
+## 🔁 Model Promotion Modes (Automatic vs Manual)
+
+This project supports two ways of promoting models to production using MLflow aliases.
+
+---
+
+### ⚡ Automatic Mode (Default)
+
+By default, the training script automatically assigns the latest trained model to the `production` alias.
+
+```python
+AUTOMATION_MODE = True
+```
+
+After training:
+
+* The newest model version is immediately set as `production`
+* The API automatically uses this model for predictions
+
+✔ This ensures a fully automated pipeline
+
+---
+
+### 🧪 Manual Mode (via MLflow UI)
+
+To manually control which model is used in production:
+
+1. Open `src/train/train.py`
+2. Set:
+
+```python
+AUTOMATION_MODE = False
+```
+
+3. Run the training script again in Docker container: 
+```bash
+docker exec -it mlflow_server python src/train/train.py
+```
+  → The new model will be registered **without changing the production alias**
+
+4. Open MLflow UI:
+
+```
+http://localhost:5001
+```
+
+5. Go to:
+
+   * **Models → iris_model_**
+   * Select the desired version
+   * Assign the alias: `production`
+
+
+####  Result
+
+* The API dynamically loads:
+
+  ```
+  models:/iris_model@production
+  ```
+* Switching the alias in MLflow instantly updates the model used by the API
+* No container restart is required
+
 ---
 
 ## 🧪 Example Usage
